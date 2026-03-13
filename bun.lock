@@ -98,7 +98,7 @@
         "@babel/core": "7.28.6",
         "@biomejs/biome": "2.3.11",
         "@react-native-community/cli": "20.1.1",
-        "@react-native-tvos/config-tv": "0.1.4",
+        "@react-native-tvos/config-tv": "0.1.5",
         "@types/jest": "29.5.14",
         "@types/lodash": "4.17.23",
         "@types/react": "19.1.17",
@@ -538,7 +538,7 @@
 
     "@react-native-community/netinfo": ["@react-native-community/netinfo@11.4.1", "", { "peerDependencies": { "react-native": ">=0.59" } }, "sha512-B0BYAkghz3Q2V09BF88RA601XursIEA111tnc2JOaN7axJWmNefmfjZqw/KdSxKZp7CZUuPpjBmz/WCR9uaHYg=="],
 
-    "@react-native-tvos/config-tv": ["@react-native-tvos/config-tv@0.1.4", "", { "dependencies": { "getenv": "^1.0.0" }, "peerDependencies": { "expo": ">=52.0.0" } }, "sha512-xfVDqSFjEUsb+xcMk0hE2Z/M6QZH0QzAJOSQZwo7W/ZRaLrd+xFQnx0LaXqt3kxlR3P7wskKHByDP/FSoUZnbA=="],
+    "@react-native-tvos/config-tv": ["@react-native-tvos/config-tv@0.1.5", "", { "dependencies": { "getenv": "^1.0.0" }, "peerDependencies": { "expo": ">=52.0.0" } }, "sha512-f9PyeBKMJs7LUI0qzAyFFUzmcrgiSlb+yytD7y/mOaIpscw0cLnZYvdeEY7YEKy4ZZ5hsOtUQks+KWd5CKrcGA=="],
 
     "@react-native/assets-registry": ["@react-native/assets-registry@0.81.5", "", {}, "sha512-705B6x/5Kxm1RKRvSv0ADYWm5JOnoiQ1ufW7h8uu2E6G9Of/eE6hP/Ivw3U5jI16ERqZxiKQwk34VJbB0niX9w=="],
 
