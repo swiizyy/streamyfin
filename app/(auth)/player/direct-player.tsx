@@ -16,18 +16,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, Platform, useWindowDimensions, View } from "react-native";
 import { useAnimatedReaction, useSharedValue } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BITRATES } from "@/components/BitrateSelector";
 import { Text } from "@/components/common/Text";
 import { Loader } from "@/components/Loader";
 import { Controls } from "@/components/video-player/controls/Controls";
 import { PlayerProvider } from "@/components/video-player/controls/contexts/PlayerContext";
 import { VideoProvider } from "@/components/video-player/controls/contexts/VideoContext";
+import SkipButton from "@/components/video-player/controls/SkipButton";
 import {
   PlaybackSpeedScope,
   updatePlaybackSpeedSettings,
 } from "@/components/video-player/controls/utils/playback-speed-settings";
 import useRouter from "@/hooks/useAppRouter";
+import { useCreditSkipper } from "@/hooks/useCreditSkipper";
 import { useHaptic } from "@/hooks/useHaptic";
+import { useIntroSkipper } from "@/hooks/useIntroSkipper";
 import { useOrientation } from "@/hooks/useOrientation";
 import { usePlaybackManager } from "@/hooks/usePlaybackManager";
 import usePlaybackSpeed from "@/hooks/usePlaybackSpeed";
@@ -66,6 +70,7 @@ export default function page() {
   const navigation = useNavigation();
   const router = useRouter();
   const { settings, updateSettings } = useSettings();
+  const insets = useSafeAreaInsets();
 
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
@@ -84,6 +89,7 @@ export default function page() {
   const [hasPlaybackStarted, setHasPlaybackStarted] = useState(false);
   const [currentPlaybackSpeed, setCurrentPlaybackSpeed] = useState(1.0);
   const [showTechnicalInfo, setShowTechnicalInfo] = useState(false);
+  const [currentTimeMs, setCurrentTimeMs] = useState(0);
 
   const progress = useSharedValue(0);
   const isSeeking = useSharedValue(false);
@@ -246,6 +252,11 @@ export default function page() {
   const [streamStatus, setStreamStatus] = useState({
     isLoading: true,
     isError: false,
+  });
+
+  const { nextItem } = usePlaybackManager({
+    item,
+    isOffline: offline,
   });
 
   useEffect(() => {
@@ -453,6 +464,7 @@ export default function page() {
       const { position, cacheSeconds } = data.nativeEvent;
       // MPV reports position in seconds, convert to ms
       const currentTime = position * 1000;
+      setCurrentTimeMs(currentTime);
 
       if (isBuffering) {
         setIsBuffering(false);
@@ -763,6 +775,30 @@ export default function page() {
     videoRef.current?.seekTo?.(position / 1000);
   }, []);
 
+  const totalDurationMs = item?.RunTimeTicks ? msToTicks(item.RunTimeTicks) : 0;
+
+  const { showSkipButton, skipIntro } = useIntroSkipper(
+    itemId,
+    currentTimeMs,
+    seek,
+    play,
+    offline,
+    api,
+    downloadedFiles,
+  );
+
+  const { showSkipCreditButton, skipCredit, hasContentAfterCredits } =
+    useCreditSkipper(
+      itemId,
+      currentTimeMs,
+      seek,
+      play,
+      offline,
+      api,
+      downloadedFiles,
+      totalDurationMs,
+    );
+
   // Technical info toggle handler
   const handleToggleTechnicalInfo = useCallback(() => {
     setShowTechnicalInfo((prev) => !prev);
@@ -992,35 +1028,65 @@ export default function page() {
               )}
             </View>
             {isMounted === true && item && !isPipMode && (
-              <Controls
-                mediaSource={stream?.mediaSource}
-                item={item}
-                togglePlay={togglePlay}
-                isPlaying={isPlaying}
-                isSeeking={isSeeking}
-                progress={progress}
-                cacheProgress={cacheProgress}
-                isBuffering={isBuffering}
-                showControls={showControls}
-                setShowControls={setShowControls}
-                startPictureInPicture={startPictureInPicture}
-                play={play}
-                pause={pause}
-                seek={seek}
-                enableTrickplay={true}
-                aspectRatio={aspectRatio}
-                isZoomedToFill={isZoomedToFill}
-                onZoomToggle={handleZoomToggle}
-                api={api}
-                downloadedFiles={downloadedFiles}
-                playbackSpeed={currentPlaybackSpeed}
-                setPlaybackSpeed={handleSetPlaybackSpeed}
-                showTechnicalInfo={showTechnicalInfo}
-                onToggleTechnicalInfo={handleToggleTechnicalInfo}
-                getTechnicalInfo={getTechnicalInfo}
-                playMethod={playMethod}
-                transcodeReasons={transcodeReasons}
-              />
+              <>
+                <Controls
+                  mediaSource={stream?.mediaSource}
+                  item={item}
+                  togglePlay={togglePlay}
+                  isPlaying={isPlaying}
+                  isSeeking={isSeeking}
+                  progress={progress}
+                  cacheProgress={cacheProgress}
+                  isBuffering={isBuffering}
+                  showControls={showControls}
+                  setShowControls={setShowControls}
+                  startPictureInPicture={startPictureInPicture}
+                  play={play}
+                  pause={pause}
+                  seek={seek}
+                  enableTrickplay={true}
+                  aspectRatio={aspectRatio}
+                  isZoomedToFill={isZoomedToFill}
+                  onZoomToggle={handleZoomToggle}
+                  playbackSpeed={currentPlaybackSpeed}
+                  setPlaybackSpeed={handleSetPlaybackSpeed}
+                  showTechnicalInfo={showTechnicalInfo}
+                  onToggleTechnicalInfo={handleToggleTechnicalInfo}
+                  getTechnicalInfo={getTechnicalInfo}
+                  playMethod={playMethod}
+                  transcodeReasons={transcodeReasons}
+                  showSkipCreditButton={showSkipCreditButton}
+                  hasContentAfterCredits={hasContentAfterCredits}
+                />
+                <View
+                  pointerEvents='box-none'
+                  className='absolute flex flex-row space-x-2 shrink-0 px-2'
+                  style={{
+                    right:
+                      (settings?.safeAreaInControlsEnabled ?? true)
+                        ? insets.right
+                        : 0,
+                    bottom:
+                      ((settings?.safeAreaInControlsEnabled ?? true)
+                        ? Math.max(insets.bottom - 17, 0)
+                        : 0) + 70,
+                  }}
+                >
+                  <SkipButton
+                    showButton={showSkipButton}
+                    onPress={skipIntro}
+                    buttonText='Skip Intro'
+                  />
+                  <SkipButton
+                    showButton={
+                      showSkipCreditButton &&
+                      (hasContentAfterCredits || !nextItem)
+                    }
+                    onPress={skipCredit}
+                    buttonText='Skip Credits'
+                  />
+                </View>
+              </>
             )}
           </View>
         </VideoProvider>

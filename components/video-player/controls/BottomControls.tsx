@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/common/Text";
 import { useSettings } from "@/utils/atoms/settings";
 import NextEpisodeCountDownButton from "./NextEpisodeCountDownButton";
-import SkipButton from "./SkipButton";
 import { TimeDisplay } from "./TimeDisplay";
 import { TrickplayBubble } from "./TrickplayBubble";
 
@@ -18,11 +17,8 @@ interface BottomControlsProps {
   showRemoteBubble: boolean;
   currentTime: number;
   remainingTime: number;
-  showSkipButton: boolean;
   showSkipCreditButton: boolean;
   hasContentAfterCredits: boolean;
-  skipIntro: () => void;
-  skipCredit: () => void;
   nextItem?: BaseItemDto | null;
   handleNextEpisodeAutoPlay: () => void;
   handleNextEpisodeManual: () => void;
@@ -66,11 +62,8 @@ export const BottomControls: FC<BottomControlsProps> = ({
   showRemoteBubble,
   currentTime,
   remainingTime,
-  showSkipButton,
   showSkipCreditButton,
   hasContentAfterCredits,
-  skipIntro,
-  skipCredit,
   nextItem,
   handleNextEpisodeAutoPlay,
   handleNextEpisodeManual,
@@ -133,21 +126,6 @@ export const BottomControls: FC<BottomControlsProps> = ({
           )}
         </View>
         <View className='flex flex-row space-x-2 shrink-0'>
-          <SkipButton
-            showButton={showSkipButton}
-            onPress={skipIntro}
-            buttonText='Skip Intro'
-          />
-          {/* Smart Skip Credits behavior:
-              - Show "Skip Credits" if there's content after credits OR no next episode
-              - Show "Next Episode" if credits extend to video end AND next episode exists */}
-          <SkipButton
-            showButton={
-              showSkipCreditButton && (hasContentAfterCredits || !nextItem)
-            }
-            onPress={skipCredit}
-            buttonText='Skip Credits'
-          />
           {settings.autoPlayNextEpisode !== false &&
             (settings.maxAutoPlayEpisodeCount.value === -1 ||
               settings.autoPlayEpisodeCount <

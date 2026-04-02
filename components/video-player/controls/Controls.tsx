@@ -1,4 +1,3 @@
-import { Api } from "@jellyfin/sdk";
 import type {
   BaseItemDto,
   MediaSourceInfo,
@@ -16,13 +15,10 @@ import Animated, {
 } from "react-native-reanimated";
 import ContinueWatchingOverlay from "@/components/video-player/controls/ContinueWatchingOverlay";
 import useRouter from "@/hooks/useAppRouter";
-import { useCreditSkipper } from "@/hooks/useCreditSkipper";
 import { useHaptic } from "@/hooks/useHaptic";
-import { useIntroSkipper } from "@/hooks/useIntroSkipper";
 import { usePlaybackManager } from "@/hooks/usePlaybackManager";
 import { useTrickplay } from "@/hooks/useTrickplay";
 import type { TechnicalInfo } from "@/modules/mpv-player";
-import { DownloadedItem } from "@/providers/Downloads/types";
 import { useOfflineMode } from "@/providers/OfflineModeProvider";
 import { useSettings } from "@/utils/atoms/settings";
 import { getDefaultPlaySettings } from "@/utils/jellyfin/getDefaultPlaySettings";
@@ -61,8 +57,6 @@ interface Props {
   aspectRatio?: AspectRatio;
   isZoomedToFill?: boolean;
   onZoomToggle?: () => void;
-  api?: Api | null;
-  downloadedFiles?: DownloadedItem[];
   // Playback speed props
   playbackSpeed?: number;
   setPlaybackSpeed?: (speed: number, scope: PlaybackSpeedScope) => void;
@@ -72,6 +66,8 @@ interface Props {
   getTechnicalInfo?: () => Promise<TechnicalInfo>;
   playMethod?: "DirectPlay" | "DirectStream" | "Transcode";
   transcodeReasons?: string[];
+  showSkipCreditButton: boolean;
+  hasContentAfterCredits: boolean;
 }
 
 export const Controls: FC<Props> = ({
@@ -92,8 +88,6 @@ export const Controls: FC<Props> = ({
   aspectRatio = "default",
   isZoomedToFill = false,
   onZoomToggle,
-  api = null,
-  downloadedFiles = undefined,
   playbackSpeed = 1.0,
   setPlaybackSpeed,
   showTechnicalInfo = false,
@@ -101,6 +95,8 @@ export const Controls: FC<Props> = ({
   getTechnicalInfo,
   playMethod,
   transcodeReasons,
+  showSkipCreditButton,
+  hasContentAfterCredits,
 }) => {
   const offline = useOfflineMode();
   const { settings, updateSettings } = useSettings();
@@ -299,28 +295,6 @@ export const Controls: FC<Props> = ({
     audioIndex: string;
     subtitleIndex: string;
   }>();
-
-  const { showSkipButton, skipIntro } = useIntroSkipper(
-    item.Id!,
-    currentTime,
-    seek,
-    play,
-    offline,
-    api,
-    downloadedFiles,
-  );
-
-  const { showSkipCreditButton, skipCredit, hasContentAfterCredits } =
-    useCreditSkipper(
-      item.Id!,
-      currentTime,
-      seek,
-      play,
-      offline,
-      api,
-      downloadedFiles,
-      maxMs,
-    );
 
   const goToItemCommon = useCallback(
     (item: BaseItemDto) => {
@@ -533,11 +507,8 @@ export const Controls: FC<Props> = ({
               showRemoteBubble={showRemoteBubble}
               currentTime={currentTime}
               remainingTime={remainingTime}
-              showSkipButton={showSkipButton}
               showSkipCreditButton={showSkipCreditButton}
               hasContentAfterCredits={hasContentAfterCredits}
-              skipIntro={skipIntro}
-              skipCredit={skipCredit}
               nextItem={nextItem}
               handleNextEpisodeAutoPlay={handleNextEpisodeAutoPlay}
               handleNextEpisodeManual={handleNextEpisodeManual}
