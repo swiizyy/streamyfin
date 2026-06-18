@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import type {
   BaseItemDto,
   BaseItemDtoQueryResult,
@@ -13,26 +12,19 @@ import {
 } from "@jellyfin/sdk/lib/utils/api";
 import { type QueryFunction, useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ActivityIndicator,
-  Animated,
-  Easing,
-  ScrollView,
-  View,
-} from "react-native";
+import { Animated, Easing, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button } from "@/components/Button";
-import { Text } from "@/components/common/Text";
 import { InfiniteScrollingCollectionList } from "@/components/home/InfiniteScrollingCollectionList.tv";
 import { StreamystatsPromotedWatchlists } from "@/components/home/StreamystatsPromotedWatchlists.tv";
 import { StreamystatsRecommendations } from "@/components/home/StreamystatsRecommendations.tv";
+import { TVDynamicBackdrop } from "@/components/home/TVDynamicBackdrop";
 import { TVHeroCarousel } from "@/components/home/TVHeroCarousel";
+import { TVNetworkErrorView } from "@/components/home/TVNetworkErrorView";
+import { TVQueryErrorView } from "@/components/home/TVQueryErrorView";
 import { Loader } from "@/components/Loader";
-import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useRefreshLibraryOnFocus } from "@/hooks/useRefreshLibraryOnFocus";
@@ -48,7 +40,6 @@ import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 import { scaleSize } from "@/utils/scaleSize";
 import { updateTVDiscovery } from "@/utils/tvDiscovery/sync";
 
-const HORIZONTAL_PADDING = scaleSize(60);
 const TOP_PADDING = scaleSize(100);
 // Generous gap between sections for Apple TV+ aesthetic
 const SECTION_GAP = scaleSize(24);
@@ -69,7 +60,6 @@ type Section = InfiniteScrollingCollectionListSection;
 const BACKDROP_DEBOUNCE_MS = 300;
 
 export const Home = () => {
-  const typography = useScaledTVTypography();
   const _router = useRouter();
   const { t } = useTranslation();
   const api = useAtomValue(apiAtom);
@@ -573,103 +563,17 @@ export const Home = () => {
   }, [sections, showHero, settings.mergeNextUpAndContinueWatching]);
 
   if (!isConnected || serverConnected !== true) {
-    let title = "";
-    let subtitle = "";
-
-    if (!isConnected) {
-      title = t("home.no_internet");
-      subtitle = t("home.no_internet_message");
-    } else if (serverConnected === null) {
-      title = t("home.checking_server_connection");
-      subtitle = t("home.checking_server_connection_message");
-    } else if (!serverConnected) {
-      title = t("home.server_unreachable");
-      subtitle = t("home.server_unreachable_message");
-    }
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          paddingHorizontal: HORIZONTAL_PADDING,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: typography.heading,
-            fontWeight: "bold",
-            marginBottom: 8,
-            color: "#FFFFFF",
-          }}
-        >
-          {title}
-        </Text>
-        <Text
-          style={{
-            textAlign: "center",
-            opacity: 0.7,
-            fontSize: typography.body,
-            color: "#FFFFFF",
-          }}
-        >
-          {subtitle}
-        </Text>
-
-        <View style={{ marginTop: 24 }}>
-          <Button
-            color='black'
-            onPress={retryCheck}
-            justify='center'
-            className='px-4'
-            iconRight={
-              retryLoading ? null : (
-                <Ionicons name='refresh' size={24} color='white' />
-              )
-            }
-          >
-            {retryLoading ? (
-              <ActivityIndicator size='small' color='white' />
-            ) : (
-              t("home.retry")
-            )}
-          </Button>
-        </View>
-      </View>
+      <TVNetworkErrorView
+        isConnected={isConnected}
+        serverConnected={serverConnected}
+        retryLoading={retryLoading}
+        onRetry={retryCheck}
+      />
     );
   }
 
-  if (e1)
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Text
-          style={{
-            fontSize: typography.heading,
-            fontWeight: "bold",
-            marginBottom: 8,
-            color: "#FFFFFF",
-          }}
-        >
-          {t("home.oops")}
-        </Text>
-        <Text
-          style={{
-            textAlign: "center",
-            opacity: 0.7,
-            fontSize: typography.body,
-            color: "#FFFFFF",
-          }}
-        >
-          {t("home.error_message")}
-        </Text>
-      </View>
-    );
+  if (e1) return <TVQueryErrorView />;
 
   if (l1)
     return (
@@ -680,64 +584,13 @@ export const Home = () => {
 
   return (
     <View key={cacheVersion} style={{ flex: 1, backgroundColor: "#000000" }}>
-      {/* Dynamic backdrop with crossfade - only shown when hero is disabled */}
       {!showHero && settings.showHomeBackdrop && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}
-        >
-          {/* Layer 0 */}
-          <Animated.View
-            style={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              opacity: layer0Opacity,
-            }}
-          >
-            {layer0Url && (
-              <Image
-                source={{ uri: layer0Url }}
-                style={{ width: "100%", height: "100%" }}
-                contentFit='cover'
-              />
-            )}
-          </Animated.View>
-          {/* Layer 1 */}
-          <Animated.View
-            style={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              opacity: layer1Opacity,
-            }}
-          >
-            {layer1Url && (
-              <Image
-                source={{ uri: layer1Url }}
-                style={{ width: "100%", height: "100%" }}
-                contentFit='cover'
-              />
-            )}
-          </Animated.View>
-          {/* Gradient overlays for readability */}
-          <LinearGradient
-            colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.95)"]}
-            locations={[0, 0.4, 1]}
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: "100%",
-            }}
-          />
-        </View>
+        <TVDynamicBackdrop
+          layer0Url={layer0Url}
+          layer1Url={layer1Url}
+          layer0Opacity={layer0Opacity}
+          layer1Opacity={layer1Opacity}
+        />
       )}
 
       <ScrollView

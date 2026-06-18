@@ -1,3 +1,5 @@
+export { TVAppearanceSection } from "./TVAppearanceSection";
+export { TVBufferAndVideoSection } from "./TVBufferAndVideoSection";
 export type { TVLogoutButtonProps } from "./TVLogoutButton";
 export { TVLogoutButton } from "./TVLogoutButton";
 export type { TVSectionHeaderProps } from "./TVSectionHeader";
@@ -12,3 +14,5 @@ export type { TVSettingsTextInputProps } from "./TVSettingsTextInput";
 export { TVSettingsTextInput } from "./TVSettingsTextInput";
 export type { TVSettingsToggleProps } from "./TVSettingsToggle";
 export { TVSettingsToggle } from "./TVSettingsToggle";
+export { TVSubtitlesSection } from "./TVSubtitlesSection";
+export { TVUserSwitchSection } from "./TVUserSwitchSection";
